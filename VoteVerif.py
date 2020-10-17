@@ -114,7 +114,6 @@ with open(attendenceOutput.csv, "x", newline='') as csvfile:    #creates a new f
 sys.exit(0)
 
 #---------------------------------------------------------
-
 def process(fileName):
     fileAccess = []
     
@@ -122,9 +121,12 @@ def process(fileName):
     #Get all the people in attendance with the meeting.
     with open(fileName, "r", newline='') as csvfile:    #opens the needed file      needs newline='' to interact with the csvWriter correctly
         csvReader = csv.reader(csvfile)                 #creates reader object      might need dialect='excel'
-        for row in csvReader: VotersInFile.append(VoterID(row[nameIndex], row[emailIndex])) #creates new VoterID objects from file data
+        for row in csvReader: fileAccess.append(VoterID(row[nameIndex], row[emailIndex])) #creates new VoterID objects from file data
 
-    for voter in VotersInFile:
+    # We're checking if this person is on the registered list of 
+    for voter in fileAccess:
+        if voter in Accepts:
+
 
 
     #We now have all the new voters. Time to compare lists
@@ -156,10 +158,10 @@ def process(fileName):
 #---------------------------------------------------------
 
 class VoterID:
-    def __init__(self, name, email, registered):
+    def __init__(self, name, email):
         self.name = name
         self.email = email
-        self.registered = registered
+        self.registered = False
         self.attends = 0
         self.additional_names = []
 
