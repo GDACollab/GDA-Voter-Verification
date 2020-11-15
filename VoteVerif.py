@@ -24,6 +24,7 @@
 # Step 1: Take in the variables with which we'll be working with
 #   This will involve taking in the index numbers where key information is located.
 # Step 2: Create the voter registry
+#   This will use the GDA interest meeting as a 
 # Step 3: Logs every single person in the attendance CSVs
 #   Finds discrepancies (emails that were not registered and names that matched, but the emails were wrong)
 #   Also marks the specific meeting at which you were fully qualified to vote.
@@ -34,134 +35,141 @@
 # Step 5: Return the new CSV file.
 
 import csv
+#---------------------------------------------------------
+
+# Process is intended to go through a CSV, then output a list of every single person that showed up that meeting.
+# It will go row by row, and find the name.
+# Once it has done that, it'll start counting up how long each person had been here.
+# After counting up everything, it returns a 
+def process(fileName):
+    # Meeting log is the dictionary that will link each name with a VoterID.
+    meetingLog = {}
+    confirmedAttendance = []
+
+    # Get all the people in attendance with the meeting.
+    # It goes row by row and starts counting how many minutes they were here.
+    with open(fileName, "r", newline='') as csvfile:    #opens the needed file      needs newline='' to interact with the csvWriter correctly
+        csvReader = csv.reader(csvfile)                 #creates reader object      might need dialect='excel'
+        first_skip = True
+        for row in csvReader: 
+            # Skipping the first row.
+            if first_skip:
+                first_skip = False
+                continue
+            # Now we're moving through the rows.
+            voterName = row[nameIndex]
+            # If we find that the voter is already logged in the voterRoll, we add their time to the total time of the meeting.
+            if voterName in meetingLog:
+                meetingLog[voterName] += int(row[timeIndex])
+            # If they didn't appear already, then we add them to the meeting log.
+            else:
+                meetingLog.update({ voterName : int(row[timeIndex])})
+
+    # This makes sure every attendee meets the time requirement.
+    # Only if they meet the time requirement are they counted for the meeting.
+    for voter in meetingLog.keys():
+        if meetingLog[voter] >= timeRequirement:
+            confirmedAttendance.append(voter)
+
+    return confirmedAttendance
+
+# -----------------------------------------------------------------
+# For Testing Purposes Only
+#nameIndex = 0
+#timeIndex = 4
+#weeksOfProcessing = 2
+#timeRequirement = 10
+#fileNames = ['interest_meeting.csv', 'general_meeting_1.csv']
+
 
 # Step 1: Take in the variables with which we'll be working with.
 fileNames = []
 
 # Here we're asking a bunch of questions such as what are the names of the files, what position can I find the vital information?
-nameIndex = int(input("What column are the names in the csv files?"))
-emailIndex = int(input("What column are the emails in the csv files?"))
-timeIndex = int(input("What column are the timed durations located?"))
+nameIndex = int(input("What column are the names in the csv files? (Number)"))
+timeIndex = int(input("What column are the timed durations located? (Number)"))
 weeksOfProcessing = int(input("How many weeks are we processing today?"))
 for i in range(weeksOfProcessing):
     newName = input("Please enter week " + str(i+1) + "'s CSV file, or enter nothing to skip.")
     if (newName == ""): continue
-    else: filesNames.append(newName)
-emailCSV = input("Please enter the csv file containing all registered voters.")
-registeredEmailIndex = int(input("What column are the emails for this CSV file?"))
-registeredNameIndex = int(input("What column are the names for this CSV file?"))
+    else: fileNames.append(newName)
+timeRequirement = int(input("How many minutes will each member need to be at the meeting to count as a voting member?"))
 print("Processing...")
 
-#Step 2: Create the voter registry.
-voterRoll = []
 
-# This will go through the entire registered voter roll and create that list.
-with open(emailCSV, "r", newline='') as csvfile:
-    csvReader = csv.reader(csvfile)
-    for row in csvReader: voterRoll.append(VoterID(row[registeredNameIndex],row[registeredEmailIndex], True))
+# ------------------------------------------------------------------
+# Step 2: Process a batch of the attendees.
+# This involves passing a file over to the process function, which will get us a list of people that attended the required number of minutes.
+# After that, we add them into the VoterRoll dictionary, which tracks names as well as the number of visits they've made.
 
+voterRoll = {} # Dictionary of voter names as well as what meetings they were able to make.
+
+for aFile in fileNames:
+    attendees = process(aFile)
+    for person in attendees:
+        if person in voterRoll:
+            voterRoll[person] += 1
+        else:
+            voterRoll[person] = 1
+
+# --------------------------------------------------------------------
 # Step 3: Process the attendance of all registered members
-notRegisteredRoll = []
-badNameRoll = []
-confirmedRoll = []
+#notRegisteredRoll = []
+#badNameRoll = []
+#confirmedRoll = []
 
 # We're going through the files one by one and sending them to be processed.
-for file in fileNames:
-    successful = process(file)  #success checking might not be needed
-    if not successful: print("Error: File " + file + " could not be process successfully\n")
-
-
-
-
+#for file in fileNames:
+#    successful = process(file)  #success checking might not be needed
+#    if not successful: print("Error: File " + file + " could not be process successfully\n")
 
 
 #Step 3:
-Accepts = []
-Rejects = []
+#Accepts = []
+#Rejects = []
 #IDNumber = 0    #yes, I know giving out ID numbers that increment up isn't secure, but I can make sure the same number doesn't happen twice and shutup abbouttit this
                 #is a processing system for a club election chiiiiiiiiiiiiiill
                 # Nah, we really don't need this. 
-nameIndex = 0   #The index of the names in a Zoom attendence sheet
-emailIndex = 1  #The index of the emails in a Zoom attendence sheet
+#nameIndex = 0   #The index of the names in a Zoom attendence sheet
+#emailIndex = 1  #The index of the emails in a Zoom attendence sheet
 # maxMisses = 0   #How many meetings can be missed before a club member is rejected from voting
 
 #Step 1 and 2:
-ready = False
-fileNames = [input("Enter names of the attendence files, then enter nothing to contiune")]
-while(ready == False):
-    newName = input()
-    if(newName == ""): ready = True
-    else: fileNames.append(newName)
+#ready = False
+#fileNames = [input("Enter names of the attendence files, then enter nothing to contiune")]
+#while(ready == False):
+#    newName = input()
+#    if(newName == ""): ready = True
+#   else: fileNames.append(newName)
 
 #Step 3.5
-with open(fileNames[0], "r", newline='') as csvfile:    #opens the needed file      needs newline='' to interact with the csvWriter correctly
-    csvReader = csv.reader(csvfile)                     #creates reader object      might need dialect='excel'
-    for row in csvReader: Accepts.append(VoterID(row[nameIndex], row[emailIndex])) #creates new VoterID objects from file data
-fileNames.pop(0)    #remove the first file, which will be used as
+#with open(fileNames[0], "r", newline='') as csvfile:    #opens the needed file      needs newline='' to interact with the csvWriter correctly
+#    csvReader = csv.reader(csvfile)                     #creates reader object      might need dialect='excel'
+#    for row in csvReader: Accepts.append(VoterID(row[nameIndex], row[emailIndex])) #creates new VoterID objects from file data
+#fileNames.pop(0)    #remove the first file, which will be used as
 
 #Step 4 and Question 3
-for file in fileNames:
-    #Step 5 and Question 1 and 2
-    successful = process(file)  #success checking might not be needed
-    if not successful: print("Error: File " + file + " could not be process successfully\n")
+#for file in fileNames:
+#    #Step 5 and Question 1 and 2
+#    successful = process(file)  #success checking might not be needed
+#    if not successful: print("Error: File " + file + " could not be process successfully\n")
 
 #Step 6 and 7
-with open(attendenceOutput.csv, "x", newline='') as csvfile:    #creates a new file                         needs newline='' to interact with the csvWriter correctly
+with open('attendenceOutput.csv', "x", newline='') as csvfile:    #creates a new file                         needs newline='' to interact with the csvWriter correctly
     csvWriter = csv.writer(csvfile)                             #creates writer object                      might need dialect='excel'
-    for voter in Accepts: csvWriter.writerow(voter.getRow())    #writes to the file using writer object     do I need to cast voter as VoterID?
+    for voter in voterRoll.keys(): csvWriter.writerow([voter,int(voterRoll[voter])])    #writes to the file using writer object     do I need to cast voter as VoterID?
 
-#Step 8
-sys.exit(0)
+#Step 8 Quit
+quit()
+
+
 
 #---------------------------------------------------------
-def process(fileName):
-    fileAccess = []
-    
-
-    #Get all the people in attendance with the meeting.
-    with open(fileName, "r", newline='') as csvfile:    #opens the needed file      needs newline='' to interact with the csvWriter correctly
-        csvReader = csv.reader(csvfile)                 #creates reader object      might need dialect='excel'
-        for row in csvReader: fileAccess.append(VoterID(row[nameIndex], row[emailIndex])) #creates new VoterID objects from file data
-
-    # We're checking if this person is on the registered list of 
-    for voter in fileAccess:
-        if voter in Accepts:
-
-
-
-    #We now have all the new voters. Time to compare lists
-        
-    #First Comparison: Remove potential voters that have already been rejected
-    for voter in VotersInFile:
-        if voter in Rejects:
-            VotersInFile.remove(voter)
-            Rejects.append(voter)
-
-    #Second Comparison: Add 1 miss to every Accept not in VotersInFile
-    for voter in Accepts:
-        if voter in VotersInFile: VotersInFile.remove(voter)
-        else: ++voter.misses
-
-    #Third Comparison: Add everyone from VotersInFile to Accept and give them 1 miss
-    for voter in VotersInFile:
-        ++voter.misses
-        Accepts.append(voter)
-
-    #Fourth Comparison: Move everyone in Accepts with too many misses to Rejects
-    for voter in Accepts:
-        if voter.misses > maxMisses:
-            Accepts.remove(voter)
-            Rejects.append(voter)
-
-    #This should make sure that only voters with less than maxMisses are in Accepts
-
-#---------------------------------------------------------
-
+# Voter ID is an object for tracking every single voter that comes through.
 class VoterID:
     def __init__(self, name, email):
         self.name = name
         self.email = email
-        self.registered = False
         self.attends = 0
         self.additional_names = []
 
@@ -171,5 +179,5 @@ class VoterID:
         return self.name == other.name and self.email == other.email
 
     #returns ID, name, and email in an iterable list for CSV writing
-    def getRow(self):
-        return [, self.name, self.email]
+    #def getRow(self):
+    #    return [, self.name, self.email]
